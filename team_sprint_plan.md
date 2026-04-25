@@ -27,7 +27,7 @@ Hour 6:00  → Submit
 | 0:30–1:30 | Run `snowflake_service.setup_rag_corpus()` to load docs. Test `get_critique()` in isolation with hardcoded Mermaid input. Verify the sarcastic persona works. |
 | 1:30–2:30 | Tune the system prompt. Add 10–15 more best-practice entries to the RAG corpus (AWS Well-Architected, k8s, CAP theorem gotchas). Test ElevenLabs `stream_tts()` function with a hardcoded sentence. |
 | 2:30–3:30 | Wire `routers/session.py` WebSocket. Test end-to-end: send text → receive audio. Adjust ElevenLabs voice settings (stability/style) for maximum personality. |
-| 3:30–5:00 | Integration testing with Person B's analyze endpoint. Fix any Snowflake cold-start latency issues. Pre-warm connection on startup. |
+| 3:30–5:00 | Integration testing with Umar's analyze endpoint. Fix any Snowflake cold-start latency issues. Pre-warm connection on startup. |
 | 5:00–6:00 | Polish sarcastic responses, add 5 more RAG docs, rehearse demo script |
 
 #### Test Command (standalone)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 | 1:30–2:30 | Test `diff_engine.py` by calling `diff_graphs()` with two different graphs. Verify `has_changes=False` when hash matches. Test with added/removed nodes. |
 | 2:30–3:00 | Test `vision_service.py`: take a screenshot of any draw.io diagram, call `extract_labels_from_screenshot()`, verify labels come back. |
 | 3:00–4:00 | Run `uvicorn main:app --reload`, test `POST /analyze/` via curl or Postman with sample XML. Confirm full pipeline response. |
-| 4:00–5:30 | Integration with Person A (Snowflake critique comes back in response). Fix any edge cases: empty diagrams, malformed XML, very large diagrams. |
+| 4:00–5:30 | Integration with Feras (Snowflake critique comes back in response). Fix any edge cases: empty diagrams, malformed XML, very large diagrams. |
 | 5:30–6:00 | Final testing, demo prep |
 
 #### GCP Setup (30 min, do this first)
@@ -87,7 +87,7 @@ print(graph_to_mermaid(graph))
 
 
 > The trigger chain is: **User saves draw.io → `watcher.py` detects change → watcher POSTs to backend → backend pushes critique to browser via WebSocket → UI updates.**
-> Person C's job is to make the browser react beautifully to what the WebSocket pushes in.
+> Fatima's job is to make the browser react beautifully to what the WebSocket pushes in.
 
 #### Hour-by-Hour
 | Time | Task |
@@ -136,7 +136,7 @@ useEffect(() => {
 ```
 
 > [!IMPORTANT]
-> Ask Person A/B to update `watcher.py` so the WebSocket push sends a **combined JSON payload** — not just the critique string — including `mermaid`, `change_summary`, and `vision_labels`. The frontend needs all of these in one message.
+> Ask Feras/B to update `watcher.py` so the WebSocket push sends a **combined JSON payload** — not just the critique string — including `mermaid`, `change_summary`, and `vision_labels`. The frontend needs all of these in one message.
 
 ---
 
@@ -231,7 +231,7 @@ function deriveSeverity(critique = "") {
 
 ---
 
-#### Key Files Person C Creates
+#### Key Files Fatima Creates
 | File | Purpose |
 |:--|:--|
 | `src/App.jsx` | Root layout, WebSocket setup, global state |
@@ -248,9 +248,9 @@ function deriveSeverity(critique = "") {
 
 | Time | Checkpoint | Owner |
 |:--|:--|:--|
-| **T+1h** | Backend runs at `localhost:8000/health` | Person B |
-| **T+1h** | Mock server returns data to frontend | Person C |
-| **T+2h** | `POST /analyze/` returns real Snowflake critique | Person A + B |
+| **T+1h** | Backend runs at `localhost:8000/health` | Umar |
+| **T+1h** | Mock server returns data to frontend | Fatima |
+| **T+2h** | `POST /analyze/` returns real Snowflake critique | Feras + B |
 | **T+3h** | Frontend polling sends XML → gets back Mermaid + critique | B + C |
 | **T+3:30h** | Voice plays in browser when critique arrives | A + C |
 | **T+4:30h** | Full end-to-end on a real draw.io diagram | All 3 |
@@ -260,7 +260,7 @@ function deriveSeverity(critique = "") {
 
 ## How to Run Everything
 
-### Backend (Person A or B)
+### Backend (Feras or B)
 ```bash
 cd backend
 python -m venv .venv
@@ -270,7 +270,7 @@ cp .env.example .env            # Fill in your keys
 uvicorn main:app --reload --port 8000
 ```
 
-### Mock Server (Person C, no keys needed)
+### Mock Server (Fatima, no keys needed)
 ```bash
 cd shared
 pip install fastapi uvicorn
@@ -278,7 +278,7 @@ python mock_server.py
 # Running at http://localhost:8000
 ```
 
-### Frontend (Person C)
+### Frontend (Fatima)
 ```bash
 cd frontend
 npm install
@@ -292,9 +292,9 @@ npm run dev
 
 ```bash
 # Each person works on their branch
-git checkout -b feature/llm-pipeline      # Person A
-git checkout -b feature/vision-pipeline   # Person B
-git checkout -b feature/frontend          # Person C
+git checkout -b feature/llm-pipeline      # Feras
+git checkout -b feature/vision-pipeline   # Umar
+git checkout -b feature/frontend          # Fatima
 
 # Merge to main at each integration checkpoint
 git checkout main
