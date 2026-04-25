@@ -52,23 +52,19 @@ def get_critique(
     mermaid_diagram: str,
     change_summary: str,
     vision_labels: list[str],
+    enrichment_note: str = "",
+    retry_hint: str = "",
 ) -> str:
     """
     Query Snowflake Cortex LLM with RAG to generate a sarcastic architecture critique.
-    
-    Args:
-        mermaid_diagram: Current full diagram in Mermaid syntax
-        change_summary: What just changed (from diff_engine)
-        vision_labels: Labels confirmed by GCP Vision
     """
     conn = _get_connection()
     cursor = conn.cursor()
 
-    # Build the user prompt
     vision_context = (
-        f"GCP Vision confirmed these labels on screen: {', '.join(vision_labels)}"
-        if vision_labels
-        else ""
+        f"GCP Vision confirmed these labels on screen: {', '.join(vision_labels)}\n"
+        f"{enrichment_note}"
+        if vision_labels else enrichment_note
     )
 
     user_prompt = f"""
@@ -80,11 +76,11 @@ What just changed:
 
 {vision_context}
 
-Provide your sarcastic critique focused ONLY on the change that was just made.
-"""
+{retry_hint}
 
-    # Snowflake Cortex COMPLETE function with RAG
-    # Assumes a ARCH_ENEMY_DOCS table exists with best-practice documentation
+Provide your sarcastic critique focused ONLY on the change that was just made.
+""".strip()
+
     query = """
     SELECT SNOWFLAKE.CORTEX.COMPLETE(
         'llama3.1-70b',
@@ -94,7 +90,7 @@ Provide your sarcastic critique focused ONLY on the change that was just made.
                 'content': %s
             },
             {
-                'role': 'user', 
+                'role': 'user',
                 'content': %s
             }
         ],

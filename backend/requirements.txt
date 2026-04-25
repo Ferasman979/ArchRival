@@ -9,7 +9,8 @@ python-multipart==0.0.9
 lxml==5.3.0
 Pillow==10.4.0
 deepdiff==7.0.1
+slowapi==0.1.9
 
-# Watcher dependencies
+# Watcher dependencies (optional - only needed for desktop draw.io mode)
 watchdog==4.0.1
 pygetwindow==0.0.9

@@ -1,13 +1,13 @@
 """
-main.py — FastAPI entry point for Arch-Enemy backend.
-Exposes:
-  POST /analyze      — receives draw.io XML + screenshot, returns critique
-  WS   /ws/session   — WebSocket for real-time streaming critique
-  GET  /health       — health check
+main.py — FastAPI entry point with slowapi rate limiting.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 import os
 
@@ -15,7 +15,13 @@ load_dotenv()
 
 from routers import analyze, session
 
-app = FastAPI(title="Arch-Enemy API", version="1.0.0")
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI(title="Arch-Enemy API", version="2.0.0")
+
+# Rate limiter state + handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,4 +37,4 @@ app.include_router(session.router, prefix="/ws", tags=["websocket"])
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.0.0"}
