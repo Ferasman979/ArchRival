@@ -1,3 +1,4 @@
+import itertools
 import random
 
 
@@ -61,3 +62,34 @@ _FALLBACKS = [
 
 def get_fallback_critique() -> str:
     return random.choice(_FALLBACKS)
+
+
+# Gate 4: voice input relevance guard (used by session.py webhook)
+_ARCH_KEYWORDS = {
+    "architecture", "component", "service", "database", "api", "server",
+    "cache", "queue", "load balancer", "microservice", "container", "kubernetes",
+    "k8s", "docker", "aws", "gcp", "azure", "cloud", "network", "security",
+    "auth", "scal", "replicate", "latency", "throughput", "failover", "redundan",
+    "backup", "diagram", "design", "pattern", "connection", "pipeline", "storage",
+    "cdn", "gateway", "proxy", "kafka", "rabbit", "redis", "postgres", "mongo",
+    "sql", "lambda", "endpoint", "rest", "graphql", "grpc", "websocket",
+    "why", "how", "should", "better", "wrong", "fix", "improve", "suggest",
+    "recommend", "bad idea", "good idea",
+}
+
+_CANNED_OFFTOPIC = itertools.cycle([
+    "I review architectures, not life advice. Ask me about your diagram.",
+    "Fascinating question. Completely irrelevant to system design. Try again.",
+    "I'm a Principal Engineer, not a search engine. Architecture questions only.",
+    "That has nothing to do with the diagram in front of us. Refocus.",
+    "My expertise is system design. Your question is not. Let's get back on track.",
+])
+
+
+def is_architecture_relevant(text: str) -> bool:
+    t = text.lower()
+    return any(kw in t for kw in _ARCH_KEYWORDS)
+
+
+def get_canned_offtopic_response() -> str:
+    return next(_CANNED_OFFTOPIC)
