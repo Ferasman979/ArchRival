@@ -1,10 +1,13 @@
 """
-main.py — FastAPI entry point with slowapi rate limiting.
+main.py — FastAPI entry point for Arch-Enemy backend.
+Exposes:
+  POST /analyze      — receives draw.io XML + screenshot, returns critique
+  WS   /ws/session   — WebSocket for real-time streaming critique
+  GET  /health       — health check
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -19,7 +22,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Arch-Enemy API", version="2.0.0")
 
-# Rate limiter state + handler
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
