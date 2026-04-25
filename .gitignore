@@ -9,15 +9,18 @@ dist/
 build/
 
 # Secrets — NEVER commit these
+CREDENTIALS_SETUP.md
 .env
 **/.env
 backend/.env
-backend/gcp-credentials.json
+# GCP service account key files (any name)
+service-account.json
+gcp-credentials.json
+*-credentials.json
+*-service-account.json
 *.json.key
 *.pem
 *.p8
-*-credentials.json
-*-service-account.json
 
 # Node
 node_modules/
