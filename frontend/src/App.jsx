@@ -10,9 +10,50 @@ const SESSION_ID = uuidv4();
 const DRAWIO_URL = 'https://embed.diagrams.net/?embed=1&proto=json&spin=1&libraries=1&dark=1&ui=dark';
 
 const DEFAULT_MERMAID = `graph TD
-    A["Your Architecture"] --> B["Will Appear Here"]
-    style A fill:#1e1e1e,stroke:#3a3a3a,color:#f0ece4
-    style B fill:#1e1e1e,stroke:#3a3a3a,color:#f0ece4`;
+    A["Your Architecture"] --> B["Will Be Judged"]
+    style A fill:#1a1a1a,stroke:#333,color:#ede8df
+    style B fill:#1a1a1a,stroke:#333,color:#ede8df`;
+
+/* ── Scanline overlay ── */
+function Scanlines() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999,
+      background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)',
+    }}>
+      <div style={{
+        position: 'absolute', width: '100%', height: '60px',
+        background: 'linear-gradient(transparent, rgba(230,57,70,0.015), transparent)',
+        animation: 'scanline-move 6s linear infinite',
+      }}/>
+    </div>
+  );
+}
+
+/* ── Glitch logo ── */
+function GlitchLogo() {
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <span style={{ fontFamily: 'var(--display)', fontSize: 24, color: 'var(--red)', letterSpacing: '0.06em', textShadow: '0 0 30px var(--red-glow)' }}>
+        ARCH-ENEMY
+      </span>
+      <span style={{
+        position: 'absolute', inset: 0,
+        fontFamily: 'var(--display)', fontSize: 24, color: 'cyan',
+        letterSpacing: '0.06em', opacity: 0.4,
+        animation: 'glitch-1 6s infinite',
+        pointerEvents: 'none',
+      }}>ARCH-ENEMY</span>
+      <span style={{
+        position: 'absolute', inset: 0,
+        fontFamily: 'var(--display)', fontSize: 24, color: 'var(--amber)',
+        letterSpacing: '0.06em', opacity: 0.3,
+        animation: 'glitch-2 6s infinite 1s',
+        pointerEvents: 'none',
+      }}>ARCH-ENEMY</span>
+    </div>
+  );
+}
 
 export default function App() {
   const [mermaidCode, setMermaidCode] = useState(DEFAULT_MERMAID);
@@ -26,12 +67,8 @@ export default function App() {
   const clearHighlightTimer = useRef(null);
   const iframeRef = useRef(null);
 
-  // Wire TTS socket on mount
-  useEffect(() => {
-    connectTTSSocket();
-  }, []);
+  useEffect(() => { connectTTSSocket(); }, []);
 
-  // Handle messages from draw.io iframe
   useEffect(() => {
     const handleMessage = async (event) => {
       if (typeof event.data !== 'string') return;
@@ -40,8 +77,7 @@ export default function App() {
 
       if (msg.event === 'init') {
         iframeRef.current?.contentWindow?.postMessage(
-          JSON.stringify({ action: 'load', autosave: 1, xml: '' }),
-          '*'
+          JSON.stringify({ action: 'load', autosave: 1, xml: '' }), '*'
         );
       }
 
@@ -80,7 +116,6 @@ export default function App() {
         }
       }
     };
-
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
@@ -88,184 +123,120 @@ export default function App() {
   const handleReset = async () => {
     await clearSession(SESSION_ID);
     setMermaidCode(DEFAULT_MERMAID);
-    setCritique('');
-    setChangeSummary('');
-    setVisionLabels([]);
-    setHighlightedNodes(new Set());
-    setIsPlaying(false);
-    setStatus('IDLE');
+    setCritique(''); setChangeSummary('');
+    setVisionLabels([]); setHighlightedNodes(new Set());
+    setIsPlaying(false); setStatus('IDLE');
   };
 
+  const statusColor = status === 'JUDGING' ? 'var(--red)' : status === 'ANALYZING' ? 'var(--amber)' : status === 'ERROR' ? 'var(--red)' : 'var(--text-dim)';
+
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: '100vh', width: '100vw',
-      background: 'var(--black)', overflow: 'hidden',
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--black)', overflow: 'hidden' }}>
+      <Scanlines/>
 
       {/* ── Top bar ── */}
       <div style={{
-        height: 48,
-        background: 'var(--surface-2)',
+        height: 52, background: 'var(--surface-2)',
         borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        flexShrink: 0,
-        position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 20px', flexShrink: 0, position: 'relative',
       }}>
-        {/* Scan line effect */}
-        <div style={{
-          position: 'absolute', inset: 0, overflow: 'hidden',
-          pointerEvents: 'none', opacity: 0.03,
-        }}>
-          <div style={{
-            position: 'absolute', width: '100%', height: 1,
-            background: 'var(--text-primary)',
-            animation: 'scan-line 4s linear infinite',
-          }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <GlitchLogo/>
+          <div style={{ width: 1, height: 20, background: 'var(--border)' }}/>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.12em' }}>
+            YOUR ARCHITECTURE. REVIEWED. JUDGED. ROASTED.
+          </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{
-            fontFamily: 'var(--display)',
-            fontSize: 22, letterSpacing: '0.08em',
-            color: 'var(--red)',
-            textShadow: '0 0 20px var(--red-glow)',
-          }}>
-            ARCH-RIVAL
-          </span>
-          <div style={{
-            height: 16, width: 1,
-            background: 'var(--border)',
-          }} />
-          <span style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            color: 'var(--text-dim)',
-            letterSpacing: '0.1em',
-          }}>
-            YOUR ARCHITECTURE REVIEWED BY SOMEONE WHO CARES TOO MUCH
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          {/* Status pill */}
+          {/* Status */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '4px 10px',
-            borderRadius: 4,
-            border: `1px solid ${status === 'JUDGING' ? 'var(--red)' : status === 'ANALYZING' ? 'var(--amber)' : 'var(--border)'}`,
-            background: status === 'JUDGING' ? 'var(--red-dim)' : status === 'ANALYZING' ? 'var(--amber-dim)' : 'transparent',
+            padding: '4px 10px', borderRadius: 3,
+            border: `1px solid ${statusColor}`,
+            background: status !== 'IDLE' ? `color-mix(in srgb, ${statusColor} 10%, transparent)` : 'transparent',
             transition: 'all 0.3s',
           }}>
             <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: status === 'JUDGING' ? 'var(--red)' : status === 'ANALYZING' ? 'var(--amber)' : 'var(--text-dim)',
-              animation: status !== 'IDLE' ? 'blink 1s infinite' : 'none',
-            }} />
-            <span style={{
-              fontFamily: 'var(--mono)', fontSize: 10,
-              letterSpacing: '0.1em',
-              color: status === 'JUDGING' ? 'var(--red)' : status === 'ANALYZING' ? 'var(--amber)' : 'var(--text-dim)',
-            }}>
+              width: 5, height: 5, borderRadius: '50%',
+              background: statusColor,
+              boxShadow: status !== 'IDLE' ? `0 0 6px ${statusColor}` : 'none',
+              animation: status !== 'IDLE' ? 'blink 0.8s infinite' : 'none',
+            }}/>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: statusColor, letterSpacing: '0.12em' }}>
               {status}
             </span>
           </div>
 
           <button onClick={handleReset} style={{
-            fontFamily: 'var(--mono)', fontSize: 10,
-            letterSpacing: '0.1em',
-            padding: '5px 12px', borderRadius: 4,
+            fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em',
+            padding: '5px 12px', borderRadius: 3,
             border: '1px solid var(--border)',
-            background: 'transparent',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
+            background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
             transition: 'all 0.2s',
           }}
-            onMouseEnter={e => { e.target.style.borderColor = 'var(--border-bright)'; e.target.style.color = 'var(--text-primary)'; }}
-            onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-secondary)'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.color = 'var(--red)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
           >
-            RESET
+            RESET SESSION
           </button>
         </div>
       </div>
 
-      {/* ── Main area ── */}
-      <div style={{
-        flex: 1, display: 'grid',
-        gridTemplateColumns: '1fr 340px 320px',
-        overflow: 'hidden',
-      }}>
+      {/* ── Main 3-panel layout ── */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 340px 300px', overflow: 'hidden' }}>
 
         {/* Panel 1 — draw.io */}
-        <div style={{
-          borderRight: '1px solid var(--border)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden', position: 'relative',
-        }}>
+        <div style={{ borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <div style={{
-            padding: '8px 14px',
-            borderBottom: '1px solid var(--border)',
-            fontFamily: 'var(--mono)', fontSize: 10,
-            letterSpacing: '0.1em', color: 'var(--text-dim)',
-            background: 'var(--surface-2)',
+            padding: '7px 14px', borderBottom: '1px solid var(--border)',
+            fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em',
+            color: 'var(--text-dim)', background: 'var(--surface-2)',
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <span style={{ color: 'var(--amber)' }}>◈</span>
+            <span style={{ color: 'var(--amber)', fontSize: 11 }}>◈</span>
             DIAGRAM EDITOR — SAVE TO TRIGGER REVIEW
           </div>
           <iframe
             ref={iframeRef}
             src={DRAWIO_URL}
-            style={{
-              flex: 1, border: 'none',
-              background: 'var(--black)',
-              filter: 'invert(0)',
-            }}
+            style={{ flex: 1, border: 'none', background: 'var(--black)' }}
             title="draw.io diagram editor"
           />
           {isAnalyzing && (
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'rgba(8,8,8,0.7)',
+              background: 'rgba(6,6,6,0.75)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backdropFilter: 'blur(2px)',
+              backdropFilter: 'blur(3px)',
               animation: 'fade-in 0.2s ease',
             }}>
-              <div style={{
-                fontFamily: 'var(--mono)', fontSize: 12,
-                color: 'var(--amber)', letterSpacing: '0.15em',
-                animation: 'blink 1s infinite',
-              }}>
-                ANALYZING...
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: 'var(--amber)', letterSpacing: '0.1em', animation: 'blink 0.8s infinite' }}>
+                  ANALYZING
+                </div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.1em', marginTop: 6 }}>
+                  CONSULTING THE ENEMY...
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Panel 2 — Mermaid diagram */}
-        <div style={{
-          borderRight: '1px solid var(--border)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden', background: 'var(--surface)',
-        }}>
+        {/* Panel 2 — Mermaid */}
+        <div style={{ borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface)' }}>
           <div style={{
-            padding: '8px 14px',
-            borderBottom: '1px solid var(--border)',
-            fontFamily: 'var(--mono)', fontSize: 10,
-            letterSpacing: '0.1em', color: 'var(--text-dim)',
-            background: 'var(--surface-2)',
+            padding: '7px 14px', borderBottom: '1px solid var(--border)',
+            fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em',
+            color: 'var(--text-dim)', background: 'var(--surface-2)',
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <span style={{ color: 'var(--green)' }}>◈</span>
+            <span style={{ color: 'var(--green)', fontSize: 11 }}>◈</span>
             PARSED ARCHITECTURE
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <MermaidView
-              mermaidCode={mermaidCode}
-              highlightedNodes={highlightedNodes}
-            />
+            <MermaidView mermaidCode={mermaidCode} highlightedNodes={highlightedNodes}/>
           </div>
         </div>
 
@@ -280,22 +251,21 @@ export default function App() {
 
       {/* ── Bottom bar ── */}
       <div style={{
-        height: 28,
-        background: 'var(--surface-2)',
+        height: 26, background: 'var(--surface-2)',
         borderTop: '1px solid var(--border)',
         display: 'flex', alignItems: 'center',
-        padding: '0 16px', gap: 20,
-        flexShrink: 0,
+        padding: '0 16px', gap: 24, flexShrink: 0,
       }}>
         {[
-          ['SESSION', SESSION_ID.slice(0, 8).toUpperCase()],
+          ['SESSION', SESSION_ID.slice(0,8).toUpperCase()],
           ['BACKEND', 'localhost:8000'],
-          ['MODEL', 'SNOWFLAKE CORTEX'],
+          ['LLM', 'SNOWFLAKE CORTEX'],
           ['VOICE', 'ELEVENLABS'],
-        ].map(([k, v]) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>{k}</span>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-secondary)', letterSpacing: '0.06em' }}>{v}</span>
+          ['VISION', 'GOOGLE CLOUD'],
+        ].map(([k,v]) => (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>{k}</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--border-bright)', letterSpacing: '0.06em' }}>{v}</span>
           </div>
         ))}
       </div>
