@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+dist/
+build/
+
+# Secrets — NEVER commit these
+.env
+**/.env
+backend/.env
+backend/gcp-credentials.json
+*.json.key
+*.pem
+*.p8
+*-credentials.json
+*-service-account.json
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
