@@ -1,111 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Black+Ops+One&family=DM+Sans:wght@300;400;500&display=swap');
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --black: #060606;
+  --surface: #0d0d0d;
+  --surface-2: #131313;
+  --surface-3: #1a1a1a;
+  --border: #222;
+  --border-bright: #333;
+  --red: #e63946;
+  --red-dim: rgba(230,57,70,0.12);
+  --red-glow: rgba(230,57,70,0.4);
+  --amber: #f4a261;
+  --amber-dim: rgba(244,162,97,0.1);
+  --green: #2a9d8f;
+  --green-dim: rgba(42,157,143,0.12);
+  --text-primary: #ede8df;
+  --text-secondary: #7a7570;
+  --text-dim: #383533;
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Black Ops One', sans-serif;
+  --body: 'DM Sans', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; width: 100%; background: var(--black); color: var(--text-primary); font-family: var(--body); overflow: hidden; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* ── Animations ── */
+@keyframes pulse-red {
+  0%,100% { box-shadow: 0 0 0 0 var(--red-glow); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+@keyframes pulse-amber {
+  0%,100% { box-shadow: 0 0 0 0 rgba(244,162,97,0.35); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+@keyframes node-pulse {
+  from { filter: drop-shadow(0 0 5px var(--red)); }
+  to { filter: drop-shadow(0 0 18px var(--red)); }
+}
+@keyframes typing-cursor {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes waveform {
+  0%,100% { transform: scaleY(0.2); }
+  50% { transform: scaleY(1); }
+}
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes glitch-1 {
+  0%,100% { clip-path: inset(0 0 98% 0); transform: translate(-3px,0); }
+  20% { clip-path: inset(30% 0 50% 0); transform: translate(3px,0); }
+  40% { clip-path: inset(70% 0 10% 0); transform: translate(-2px,0); }
+  60% { clip-path: inset(10% 0 80% 0); transform: translate(2px,0); }
+  80% { clip-path: inset(50% 0 30% 0); transform: translate(-3px,0); }
+}
+@keyframes glitch-2 {
+  0%,100% { clip-path: inset(80% 0 5% 0); transform: translate(3px,0); opacity: 0.6; }
+  25% { clip-path: inset(10% 0 70% 0); transform: translate(-3px,0); }
+  50% { clip-path: inset(50% 0 20% 0); transform: translate(2px,0); }
+  75% { clip-path: inset(20% 0 60% 0); transform: translate(-2px,0); }
+}
+@keyframes scanline-move {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes flicker {
+  0%,100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.85; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+@keyframes eye-blink {
+  0%,90%,100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.05); }
+}
+@keyframes eye-look {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
 }
 
-body {
-  margin: 0;
+/* ── Mermaid ── */
+.arch-enemy-highlight rect,
+.arch-enemy-highlight circle,
+.arch-enemy-highlight polygon,
+.arch-enemy-highlight path {
+  stroke: var(--red) !important;
+  stroke-width: 2.5px !important;
+  animation: node-pulse 1s ease-in-out infinite alternate;
 }
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
+.mermaid-container svg { background: transparent !important; max-width: 100%; height: auto; }
+.mermaid-container .node rect,
+.mermaid-container .node circle { fill: var(--surface-3) !important; stroke: var(--border-bright) !important; }
+.mermaid-container .node .label { color: var(--text-primary) !important; fill: var(--text-primary) !important; }
+.mermaid-container .edgePath path { stroke: var(--border-bright) !important; }
