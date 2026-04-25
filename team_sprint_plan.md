@@ -16,7 +16,7 @@ Hour 6:00  → Submit
 
 ## Team Division (3 People, Fully Parallel from Minute 1)
 
-### 🧠 Person A — Backend: LLM Pipeline (Snowflake + ElevenLabs)
+### 🧠 Feras — Backend: LLM Pipeline (Snowflake + ElevenLabs)
 **Branch:** `feature/llm-pipeline`  
 **Files owned:** `backend/services/snowflake_service.py`, `backend/services/elevenlabs_service.py`, `backend/routers/session.py`
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
 ---
 
-### ⚙️ Person B — Backend: Vision + Diff Engine + API Orchestration
+### ⚙️ Umar — Backend: Vision + Diff Engine + API Orchestration
 **Branch:** `feature/vision-pipeline`  
 **Files owned:** `backend/services/xml_parser.py`, `backend/services/diff_engine.py`, `backend/services/vision_service.py`, `backend/routers/analyze.py`, `backend/main.py`
 
@@ -81,7 +81,7 @@ print(graph_to_mermaid(graph))
 
 ---
 
-### 🎨 Person C — Frontend: UI + WebSocket Listener + Highlighting
+### 🎨 Fatima — Frontend: UI + WebSocket Listener + Highlighting
 **Branch:** `feature/frontend`  
 **Files owned:** Everything in `frontend/src/`
 
