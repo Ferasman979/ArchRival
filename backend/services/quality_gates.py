@@ -57,11 +57,57 @@ _FALLBACKS = [
     "I've seen more resilience in a paper straw.",
     "Ah yes, the classic 'we'll add redundancy later' architecture. Later never comes.",
     "I see you've chosen chaos as your fault tolerance strategy.",
+    "One database. No replicas. Bold choice. Extremely bold.",
+    "Your services are so tightly coupled they might as well be one giant PHP file.",
+    "I admire the confidence of deploying without a health check. Truly.",
+    "That's not a microservices architecture. That's a distributed monolith with extra steps.",
+    "Direct database access from the frontend. Daring. Unhinged, but daring.",
 ]
+
+_FALLBACK_CYCLE = None
 
 
 def get_fallback_critique() -> str:
-    return random.choice(_FALLBACKS)
+    global _FALLBACK_CYCLE
+    if _FALLBACK_CYCLE is None:
+        pool = _FALLBACKS[:]
+        random.shuffle(pool)
+        _FALLBACK_CYCLE = itertools.cycle(pool)
+    return next(_FALLBACK_CYCLE)
+
+
+# ── Severity scoring ──────────────────────────────────────────────────────────
+
+_GOOD_SIGNALS = [
+    "shocked", "impressed", "survive", "finally", "beautifully", "good job",
+    "well done", "nice", "clean", "elegant", "sensible", "smart", "approved",
+    "correct", "proper", "solid", "credit", "respect", "acceptable", "love it",
+    "almost impressed", "chef", "begrudgingly", "actually did it", "well-architected",
+    "redundan", "resilient", "scalab", "decoupl", "health check",
+]
+
+_CRITICAL_SIGNALS = [
+    "single point of failure", "no cach", "no cache", "no load balancer",
+    "cursed", "disaster", "violence", "terrible", "horrible", "awful",
+    "nightmare", "catastrophe", "crying", "paper straw", "chaos",
+    "reinvented a monolith", "deploying to prod on a friday", "tightly coupled",
+    "direct database", "no replicas", "no redundan", "speechless",
+    "unhinged", "no health check", "php file",
+]
+
+
+def compute_severity(critique: str) -> str:
+    """Score critique text and return 'good', 'warning', or 'critical'."""
+    if not critique:
+        return "warning"
+    t = critique.lower()
+    good_score = sum(1 for s in _GOOD_SIGNALS if s in t)
+    critical_score = sum(1 for s in _CRITICAL_SIGNALS if s in t)
+    if critical_score > good_score:
+        return "critical"
+    if good_score > 0:
+        return "good"
+    return "warning"
 
 
 # Gate 4: voice input relevance guard (used by session.py webhook)

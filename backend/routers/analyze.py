@@ -21,6 +21,7 @@ from services.quality_gates import (
     compute_vision_overlap,
     validate_critique,
     get_fallback_critique,
+    compute_severity,
 )
 
 router = APIRouter()
@@ -45,6 +46,7 @@ class AnalyzeResponse(BaseModel):
     change_summary: str
     mermaid: str
     critique: Optional[str] = None
+    severity: str = "warning"
     vision_labels: list[str] = []
     vision_overlap_score: float = 0.0
     vision_enrichment: str = ""
@@ -115,6 +117,7 @@ async def analyze_diagram(request: Request, req: AnalyzeRequest):
         change_summary=diff["change_summary"],
         mermaid=mermaid,
         critique=critique,
+        severity=compute_severity(critique),
         vision_labels=vision_labels,
         vision_overlap_score=overlap_score,
         vision_enrichment=enrichment,

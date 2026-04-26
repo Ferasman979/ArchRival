@@ -58,6 +58,7 @@ function GlitchLogo() {
 export default function App() {
   const [mermaidCode, setMermaidCode] = useState(DEFAULT_MERMAID);
   const [critique, setCritique] = useState('');
+  const [severity, setSeverity] = useState('warning');
   const [changeSummary, setChangeSummary] = useState('');
   const [visionLabels, setVisionLabels] = useState([]);
   const [highlightedNodes, setHighlightedNodes] = useState(new Set());
@@ -91,6 +92,7 @@ export default function App() {
           if (result.has_changes) {
             setMermaidCode(result.mermaid || DEFAULT_MERMAID);
             setCritique(result.critique || '');
+            setSeverity(result.severity || 'warning');
             setChangeSummary(result.change_summary || '');
             setVisionLabels(result.vision_labels || []);
             setHighlightedNodes(extractChangedNodes(result.change_summary));
@@ -123,7 +125,7 @@ export default function App() {
   const handleReset = async () => {
     await clearSession(SESSION_ID);
     setMermaidCode(DEFAULT_MERMAID);
-    setCritique(''); setChangeSummary('');
+    setCritique(''); setSeverity('warning'); setChangeSummary('');
     setVisionLabels([]); setHighlightedNodes(new Set());
     setIsPlaying(false); setStatus('IDLE');
   };
@@ -243,6 +245,7 @@ export default function App() {
         {/* Panel 3 — Critique */}
         <CritiquePanel
           critique={critique}
+          severity={severity}
           changeSummary={changeSummary}
           visionLabels={visionLabels}
           isPlaying={isPlaying}

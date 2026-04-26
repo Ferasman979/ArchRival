@@ -15,11 +15,46 @@ app = FastAPI(title="Arch-Enemy Mock Server")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 MOCK_CRITIQUES = [
-    "Oh wonderful, you've connected your API directly to the database with zero caching layer. I'm sure that'll hold up beautifully under load. Add Redis between them — your database will thank you.",
-    "A load balancer! You actually added a load balancer. I'm genuinely shocked. Now add health checks to it and we might survive a real traffic spike.",
-    "Two databases. You added two databases with no explanation. MongoDB AND PostgreSQL? Pick one identity crisis and commit to it. Or at least justify the polyglot persistence.",
-    "A message queue! Finally, someone who understands decoupling. This architecture might actually survive a Monday morning. Add a dead-letter queue and I'll be almost impressed.",
-    "You removed the cache. You. Removed. The. Cache. I need a moment. Add it back, set a TTL, and never do that again.",
+    {
+        "critique": "Oh wonderful, you've connected your API directly to the database with zero caching layer. I'm sure that'll hold up beautifully under load. Add Redis between them — your database will thank you.",
+        "severity": "critical",
+    },
+    {
+        "critique": "A load balancer! You actually added a load balancer. I'm genuinely shocked. Now add health checks to it and we might survive a real traffic spike.",
+        "severity": "good",
+    },
+    {
+        "critique": "Two databases. You added two databases with no explanation. MongoDB AND PostgreSQL? Pick one identity crisis and commit to it. Or at least justify the polyglot persistence.",
+        "severity": "critical",
+    },
+    {
+        "critique": "A message queue! Finally, someone who understands decoupling. This architecture might actually survive a Monday morning. Add a dead-letter queue and I'll be almost impressed.",
+        "severity": "good",
+    },
+    {
+        "critique": "You removed the cache. You. Removed. The. Cache. I need a moment. Add it back, set a TTL, and never do that again.",
+        "severity": "critical",
+    },
+    {
+        "critique": "Redis Cache sitting between your API and database? Begrudgingly impressive. Someone actually read the docs. Add an eviction policy and I'll almost respect you.",
+        "severity": "good",
+    },
+    {
+        "critique": "A direct connection from the user to PostgreSQL. No API layer. No auth. No problem — until someone types DROP TABLE. Add an API server between them immediately.",
+        "severity": "critical",
+    },
+    {
+        "critique": "Load Balancer, API Server, Redis, and PostgreSQL in the right order. Clean. Sensible. Almost suspiciously correct. Add read replicas to PostgreSQL and this might actually survive production.",
+        "severity": "good",
+    },
+    {
+        "critique": "No redundancy anywhere. Single API server, single database, single point of everything. This isn't an architecture — it's a prayer.",
+        "severity": "critical",
+    },
+    {
+        "critique": "You added a CDN. I didn't think you had it in you. Static assets served at the edge — your users' browsers will actually thank you. Hook it up to your Load Balancer properly.",
+        "severity": "good",
+    },
 ]
 
 _critique_index = 0
@@ -31,24 +66,26 @@ async def mock_analyze(body: dict):
     global _critique_index, _call_count
     _call_count += 1
 
-    # Simulate no-change response 60% of the time
-    if _call_count % 5 != 0:
+    # Simulate no-change response every other save
+    if _call_count % 3 != 0:
         return {
             "has_changes": False,
             "change_summary": "No changes.",
             "mermaid": "graph TD\n    A[\"Your diagram\"] --> B[\"will appear here\"]",
             "critique": None,
+            "severity": "warning",
             "vision_labels": [],
         }
 
-    critique = MOCK_CRITIQUES[_critique_index % len(MOCK_CRITIQUES)]
+    entry = MOCK_CRITIQUES[_critique_index % len(MOCK_CRITIQUES)]
     _critique_index += 1
 
     return {
         "has_changes": True,
         "change_summary": "Added new component",
         "mermaid": "graph TD\n    API[\"FastAPI\"] --> DB[\"PostgreSQL\"]\n    API --> Cache[\"Redis\"]",
-        "critique": critique,
+        "critique": entry["critique"],
+        "severity": entry["severity"],
         "vision_labels": ["FastAPI", "PostgreSQL", "Redis"],
     }
 
