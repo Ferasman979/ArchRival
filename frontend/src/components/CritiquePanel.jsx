@@ -17,51 +17,123 @@ function deriveSeverity(critique = '') {
   return 'warning';
 }
 
-/* ── Mascot SVG — the sarcastic eye ── */
+/* ── Robot Mascot — three states ── */
 function Mascot({ severity, isPlaying }) {
   const color = severity === 'critical' ? 'var(--red)' : severity === 'good' ? 'var(--green)' : 'var(--amber)';
+  const glowColor = severity === 'critical' ? 'rgba(230,57,70,0.35)' : severity === 'good' ? 'rgba(42,157,143,0.35)' : 'rgba(244,162,97,0.35)';
+  const statusText = severity === 'critical' ? 'CHOOSING VIOLENCE' : severity === 'good' ? 'NICE ARCHITECTURE' : 'REVIEW PENDING...';
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-      padding: '16px 0 8px',
-      animation: 'float 3s ease-in-out infinite',
+      padding: '14px 0 8px',
     }}>
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Outer ring */}
-        <circle cx="32" cy="32" r="30" stroke={color} strokeWidth="1.5" strokeDasharray="4 3" opacity="0.4"/>
-        {/* Face */}
-        <circle cx="32" cy="32" r="22" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
-        {/* Glow */}
-        <circle cx="32" cy="32" r="22" fill={color} opacity="0.05"/>
-        {/* Eye white */}
-        <ellipse cx="32" cy="30" rx="10" ry="10"
-          fill="var(--surface-2)" stroke={color} strokeWidth="1"
-          style={{ animation: 'eye-blink 4s ease-in-out infinite' }}
-        />
-        {/* Pupil */}
-        <circle cx="32" cy="30" r="5" fill={color} opacity="0.9"
-          style={{ animation: isPlaying ? 'eye-look 1s ease-in-out infinite' : 'eye-look 4s ease-in-out infinite' }}
-        />
-        {/* Pupil shine */}
-        <circle cx="34" cy="28" r="1.5" fill="white" opacity="0.6"/>
-        {/* Mouth — changes by severity */}
+      <svg width="88" height="106" viewBox="0 0 88 106" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ animation: 'float 3s ease-in-out infinite', filter: `drop-shadow(0 0 10px ${glowColor})` }}>
+
+        {/* ── Antenna ── */}
+        <line x1="44" y1="11" x2="44" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="44" cy="3" r="2.5" fill={color} style={{ animation: 'blink 1.8s ease-in-out infinite' }}/>
+
+        {/* ── Head ── */}
+        <rect x="18" y="11" width="52" height="38" rx="6" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+        {/* Head inner glow */}
+        <rect x="18" y="11" width="52" height="38" rx="6" fill={color} opacity="0.05"/>
+        {/* Head corner rivets */}
+        <circle cx="24" cy="17" r="1.5" fill={color} opacity="0.4"/>
+        <circle cx="64" cy="17" r="1.5" fill={color} opacity="0.4"/>
+        <circle cx="24" cy="43" r="1.5" fill={color} opacity="0.4"/>
+        <circle cx="64" cy="43" r="1.5" fill={color} opacity="0.4"/>
+
+        {/* ── Eyes ── */}
+        {severity === 'critical' && (
+          <>
+            {/* X eyes */}
+            <line x1="28" y1="21" x2="36" y2="29" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="36" y1="21" x2="28" y2="29" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="52" y1="21" x2="60" y2="29" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="60" y1="21" x2="52" y2="29" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+          </>
+        )}
         {severity === 'good' && (
-          <path d="M24 44 Q32 50 40 44" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+          <>
+            {/* Happy arc eyes */}
+            <path d="M27 28 Q32 21 37 28" stroke={color} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <path d="M51 28 Q56 21 61 28" stroke={color} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+          </>
         )}
         {severity === 'warning' && (
-          <path d="M24 46 L40 46" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+          <>
+            {/* Glowing square eyes */}
+            <rect x="27" y="20" width="11" height="10" rx="2" fill={color} opacity="0.15" stroke={color} strokeWidth="1.2"/>
+            <rect x="29" y="22" width="7" height="6" rx="1" fill={color} opacity="0.85"/>
+            <rect x="50" y="20" width="11" height="10" rx="2" fill={color} opacity="0.15" stroke={color} strokeWidth="1.2"/>
+            <rect x="52" y="22" width="7" height="6" rx="1" fill={color} opacity="0.85"/>
+          </>
+        )}
+
+        {/* ── Mouth ── */}
+        {severity === 'good' && (
+          <path d="M30 37 Q44 46 58 37" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+        )}
+        {severity === 'warning' && (
+          <line x1="32" y1="39" x2="56" y2="39" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
         )}
         {severity === 'critical' && (
-          <path d="M24 48 Q32 43 40 48" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+          <path d="M30 43 Q44 36 58 43" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
         )}
-        {/* Eyebrow — always judgy */}
-        <path d="M24 20 Q32 16 40 20" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-        {/* Corner tech marks */}
-        <path d="M8 8 L8 16 M8 8 L16 8" stroke={color} strokeWidth="1" opacity="0.3"/>
-        <path d="M56 8 L56 16 M56 8 L48 8" stroke={color} strokeWidth="1" opacity="0.3"/>
-        <path d="M8 56 L8 48 M8 56 L16 56" stroke={color} strokeWidth="1" opacity="0.3"/>
-        <path d="M56 56 L56 48 M56 56 L48 56" stroke={color} strokeWidth="1" opacity="0.3"/>
+
+        {/* ── Body ── */}
+        <rect x="14" y="51" width="60" height="38" rx="6" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+        <rect x="14" y="51" width="60" height="38" rx="6" fill={color} opacity="0.04"/>
+
+        {/* ── Chest display ── */}
+        <rect x="22" y="59" width="44" height="22" rx="3" fill="var(--surface)" stroke={color} strokeWidth="1" opacity="0.9"/>
+        {/* Scan line on display */}
+        <rect x="22" y="59" width="44" height="4" rx="3" fill={color} opacity="0.08"/>
+        {/* Label text */}
+        <text x="44" y="69" textAnchor="middle" fill={color}
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '6px', fontWeight: 700, letterSpacing: '0.08em' }}>
+          {severity === 'critical' ? 'CRITICAL' : severity === 'good' ? 'APPROVED' : 'WARNING'}
+        </text>
+        <text x="44" y="77" textAnchor="middle" fill={color} opacity="0.55"
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '5px', letterSpacing: '0.04em' }}>
+          {statusText}
+        </text>
+
+        {/* ── Body rivets ── */}
+        <circle cx="20" cy="57" r="1.5" fill={color} opacity="0.4"/>
+        <circle cx="68" cy="57" r="1.5" fill={color} opacity="0.4"/>
+
+        {/* ── Arms ── */}
+        {/* Left arm — raised if APPROVED */}
+        {severity === 'good' ? (
+          <g transform="rotate(-55 14 54)">
+            <rect x="4" y="51" width="10" height="26" rx="4" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+            <rect x="4" y="51" width="10" height="26" rx="4" fill={color} opacity="0.05"/>
+          </g>
+        ) : (
+          <>
+            <rect x="2" y="53" width="10" height="26" rx="4" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+            <rect x="2" y="53" width="10" height="26" rx="4" fill={color} opacity="0.05"/>
+          </>
+        )}
+        {/* Right arm */}
+        <rect x="76" y="53" width="10" height="26" rx="4" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+        <rect x="76" y="53" width="10" height="26" rx="4" fill={color} opacity="0.05"/>
+
+        {/* ── Legs ── */}
+        <rect x="20" y="89" width="18" height="14" rx="5" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+        <rect x="20" y="89" width="18" height="14" rx="5" fill={color} opacity="0.05"/>
+        <rect x="50" y="89" width="18" height="14" rx="5" fill="var(--surface-3)" stroke={color} strokeWidth="1.5"/>
+        <rect x="50" y="89" width="18" height="14" rx="5" fill={color} opacity="0.05"/>
+        {/* Foot details */}
+        <line x1="22" y1="100" x2="36" y2="100" stroke={color} strokeWidth="1" opacity="0.4" strokeLinecap="round"/>
+        <line x1="52" y1="100" x2="66" y2="100" stroke={color} strokeWidth="1" opacity="0.4" strokeLinecap="round"/>
+
       </svg>
+
+      {/* Waveform when speaking */}
       {isPlaying && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {[1,2,3,4,5,6].map(i => (
@@ -96,15 +168,16 @@ function GlitchText({ text, color, fontSize = 22 }) {
   );
 }
 
-export function CritiquePanel({ critique, changeSummary, visionLabels, isPlaying }) {
+export function CritiquePanel({ critique, severity: severityProp, changeSummary, visionLabels, isPlaying }) {
   const [displayed, setDisplayed] = useState('');
+  // Use severity from backend if provided, fall back to keyword detection
   const [severity, setSeverity] = useState('warning');
   const indexRef = useRef(0);
   const timerRef = useRef(null);
 
   useEffect(() => {
     if (!critique) return;
-    setSeverity(deriveSeverity(critique));
+    setSeverity(severityProp || deriveSeverity(critique));
     setDisplayed('');
     indexRef.current = 0;
     clearInterval(timerRef.current);

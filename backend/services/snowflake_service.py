@@ -1,13 +1,12 @@
 """
 services/snowflake_service.py
-Sends the Mermaid diagram + diff context to Snowflake Cortex LLM.
-Uses RAG via Cortex Search over loaded best-practice documentation.
-Returns a sarcastic critique string.
+Calls Snowflake Cortex LLM via the SQL REST API using httpx.
+No snowflake-connector-python needed — avoids C++ build issues on Python 3.13.
 """
 
 import os
-import snowflake.connector
-from functools import lru_cache
+import json
+import httpx
 
 SARCASTIC_SYSTEM_PROMPT = """
 You are Arch-Enemy — the Gordon Ramsay of cloud infrastructure.
@@ -23,29 +22,94 @@ Rules:
 7. NEVER be generic. Tie every comment to the actual change made.
 
 Example bad-change response:
-"Oh wonderful, you've added MongoDB right next to PostgreSQL with no explanation. 
-Two databases, zero reasons. My on-call schedule is already crying. 
+"Oh wonderful, you've added MongoDB right next to PostgreSQL with no explanation.
+Two databases, zero reasons. My on-call schedule is already crying.
 Pick one and add a caching layer — Redis would love to help you here."
 
 Example good-change response:
-"A load balancer. You actually added a load balancer. 
-I'm shocked — genuinely shocked. 
+"A load balancer. You actually added a load balancer.
+I'm shocked — genuinely shocked.
 Now add health checks to it and we might survive a real traffic spike."
 """
 
+_http = httpx.Client(timeout=30.0)
+_token: str | None = None
 
-@lru_cache(maxsize=1)
-def _get_connection():
-    """Create and cache a Snowflake connection."""
-    return snowflake.connector.connect(
-        account=os.getenv("SNOWFLAKE_ACCOUNT"),
-        user=os.getenv("SNOWFLAKE_USER"),
-        password=os.getenv("SNOWFLAKE_PASSWORD"),
-        database=os.getenv("SNOWFLAKE_DATABASE"),
-        schema=os.getenv("SNOWFLAKE_SCHEMA"),
-        warehouse=os.getenv("SNOWFLAKE_WAREHOUSE"),
-        role=os.getenv("SNOWFLAKE_ROLE"),
+
+def _base_url() -> str:
+    account = os.getenv("SNOWFLAKE_ACCOUNT", "")
+    return f"https://{account}.snowflakecomputing.com"
+
+
+def _refresh_token() -> str:
+    """Authenticate with Snowflake username/password and cache the session token."""
+    global _token
+    resp = _http.post(
+        f"{_base_url()}/session/v1/login-request",
+        params={
+            "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
+            "role": os.getenv("SNOWFLAKE_ROLE"),
+        },
+        json={
+            "data": {
+                "CLIENT_APP_ID": "ArchEnemy",
+                "CLIENT_APP_VERSION": "2.0",
+                "SVN_REVISION": "1",
+                "ACCOUNT_NAME": os.getenv("SNOWFLAKE_ACCOUNT", "").upper(),
+                "LOGIN_NAME": os.getenv("SNOWFLAKE_USER"),
+                "PASSWORD": os.getenv("SNOWFLAKE_PASSWORD"),
+                "CLIENT_ENVIRONMENT": {
+                    "APPLICATION": "ArchEnemy",
+                    "OS": "Windows",
+                    "PYTHON_VERSION": "3.13",
+                },
+            }
+        },
     )
+    resp.raise_for_status()
+    body = resp.json()
+    if not body.get("success"):
+        raise RuntimeError(f"Snowflake login failed: {body.get('message', 'unknown error')}")
+    _token = body["data"]["token"]
+    return _token
+
+
+def _run_sql(sql: str, bindings: dict | None = None) -> list:
+    """Execute a SQL statement via Snowflake REST API, refreshing token on 401."""
+    global _token
+    if not _token:
+        _refresh_token()
+
+    def _post() -> httpx.Response:
+        headers = {
+            "Authorization": f'Snowflake Token="{_token}"',
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        payload: dict = {
+            "statement": sql,
+            "database": os.getenv("SNOWFLAKE_DATABASE"),
+            "schema": os.getenv("SNOWFLAKE_SCHEMA"),
+            "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
+            "role": os.getenv("SNOWFLAKE_ROLE"),
+        }
+        if bindings:
+            payload["bindings"] = bindings
+        return _http.post(
+            f"{_base_url()}/api/v2/statements",
+            headers=headers,
+            json=payload,
+        )
+
+    resp = _post()
+
+    # Token expired — re-login once and retry
+    if resp.status_code == 401:
+        _refresh_token()
+        resp = _post()
+
+    resp.raise_for_status()
+    return resp.json()["data"]
 
 
 def get_critique(
@@ -55,20 +119,14 @@ def get_critique(
     enrichment_note: str = "",
     retry_hint: str = "",
 ) -> str:
-    """
-    Query Snowflake Cortex LLM with RAG to generate a sarcastic architecture critique.
-    """
-    conn = _get_connection()
-    cursor = conn.cursor()
+    """Query Snowflake Cortex LLM to generate a sarcastic architecture critique."""
 
     vision_context = (
-        f"GCP Vision confirmed these labels on screen: {', '.join(vision_labels)}\n"
-        f"{enrichment_note}"
+        f"GCP Vision confirmed these labels: {', '.join(vision_labels)}\n{enrichment_note}"
         if vision_labels else enrichment_note
     )
 
-    user_prompt = f"""
-Current architecture diagram (Mermaid format):
+    user_prompt = f"""Current architecture (Mermaid format):
 {mermaid_diagram}
 
 What just changed:
@@ -81,71 +139,19 @@ What just changed:
 Provide your sarcastic critique focused ONLY on the change that was just made.
 """.strip()
 
-    query = """
-    SELECT SNOWFLAKE.CORTEX.COMPLETE(
-        'llama3.1-70b',
-        [
-            {
-                'role': 'system',
-                'content': %s
-            },
-            {
-                'role': 'user',
-                'content': %s
-            }
-        ],
-        {
-            'temperature': 0.7,
-            'max_tokens': 200
-        }
-    ) AS critique
-    """
+    messages = json.dumps([
+        {"role": "system", "content": SARCASTIC_SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ])
+    options = json.dumps({"temperature": 0.7, "max_tokens": 200})
 
-    cursor.execute(query, (SARCASTIC_SYSTEM_PROMPT, user_prompt))
-    result = cursor.fetchone()
-    cursor.close()
-
-    if result and result[0]:
-        import json
-        response = json.loads(result[0])
-        return response["choices"][0]["messages"].strip()
-
-    return "I'm speechless. And not in a good way."
-
-
-def setup_rag_corpus():
-    """
-    One-time setup: creates the documentation table in Snowflake for RAG.
-    Run this once before the hackathon demo.
-    """
-    conn = _get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ARCH_ENEMY_DOCS (
-            id VARCHAR,
-            content TEXT,
-            source VARCHAR,
-            embedding VECTOR(FLOAT, 768)
-        )
-    """)
-
-    # Insert key best-practice docs (abbreviated for hackathon)
-    sample_docs = [
-        ("1", "Never use a single database instance for high-traffic systems. Use read replicas and connection pooling.", "AWS Well-Architected"),
-        ("2", "Every public-facing service should have a load balancer. Single API gateways are single points of failure.", "AWS Well-Architected"),
-        ("3", "Add caching (Redis/Memcached) between your application and database to reduce read load by 70-90%.", "Databricks Best Practices"),
-        ("4", "Message queues (Kafka, RabbitMQ, SQS) decouple services and prevent cascade failures.", "System Design Primer"),
-        ("5", "Microservices should have circuit breakers. Without them, one slow service brings down the entire system.", "Netflix Tech Blog"),
-        ("6", "MongoDB and PostgreSQL serving the same data is a polyglot persistence anti-pattern without clear justification.", "Martin Fowler"),
-        ("7", "K8s clusters need resource limits on every pod. Unconstrained pods cause noisy neighbor problems.", "CNCF Best Practices"),
-    ]
-
-    cursor.executemany(
-        "INSERT INTO ARCH_ENEMY_DOCS (id, content, source) VALUES (%s, %s, %s)",
-        sample_docs,
+    rows = _run_sql(
+        "SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-70b', PARSE_JSON(?), PARSE_JSON(?)) AS critique",
+        bindings={
+            "1": {"type": "TEXT", "value": messages},
+            "2": {"type": "TEXT", "value": options},
+        },
     )
 
-    conn.commit()
-    cursor.close()
-    print("RAG corpus loaded successfully.")
+    raw = rows[0][0]
+    return json.loads(raw)["choices"][0]["messages"].strip()
